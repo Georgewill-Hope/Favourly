@@ -1,7 +1,8 @@
+import CustomButton from "@/component/CustomButton";
 import { auth } from "@/config/FirebaseConfig";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Redirect, useRouter } from "expo-router";
-import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
+import { useRouter } from "expo-router";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -51,29 +52,27 @@ const SignUp: React.FC = () => {
     transform: [{ translateY: translateY.value }],
   }));
 
-  const handleSubmit = async() => {
+  const handleSubmit = async () => {
     if (!email || !password) {
       setError("Enter a valid Email and password!");
       return;
     }
 
     try {
-      const user = await signInWithEmailAndPassword(auth, email, password)
+      const user = await signInWithEmailAndPassword(auth, email, password);
       if (user) {
-        router.replace("/trip")
+        router.replace("/trip");
       }
-      
-    } catch (error:any) {
+    } catch (error: any) {
       const errorCode = error.code;
-        const errorMessage = error.message;
-        console.log(errorCode, errorMessage);
-        if (errorCode === "auth/invalid-credential") {
-          setError("Invalid Credentials");
-        }
+      const errorMessage = error.message;
+      console.log(errorCode, errorMessage);
+      if (errorCode === "auth/invalid-credential") {
+        setError("Invalid Credentials");
+      }
     }
   };
 
-   
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-orange-500 justify-center px-6"
@@ -140,12 +139,7 @@ const SignUp: React.FC = () => {
           )}
         </View>
 
-        <TouchableOpacity
-          onPress={handleSubmit}
-          className={`mt-4 p-4 rounded-xl items-center bg-slate-800`}
-        >
-          <Text className="text-white font-Outfit-Medium text-lg">Login</Text>
-        </TouchableOpacity>
+        <CustomButton title="Login" handleSubmit={handleSubmit} />
 
         <TouchableOpacity
           className="mt-6 items-center"

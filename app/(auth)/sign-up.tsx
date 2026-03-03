@@ -1,3 +1,4 @@
+import CustomButton from "@/component/CustomButton";
 import { auth } from "@/config/FirebaseConfig";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
@@ -84,8 +85,8 @@ const SignUp: React.FC = () => {
       if (newUser) {
         router.replace("/trip");
       }
-    } catch (error:any) {
-      Alert.alert(error.code)
+    } catch (error: any) {
+      Alert.alert(error.code);
     }
   };
 
@@ -211,12 +212,7 @@ const SignUp: React.FC = () => {
           )}
         </View>
 
-        <TouchableOpacity
-          onPress={handleSubmit}
-          className={`mt-4 p-4 rounded-xl items-center bg-slate-800`}
-        >
-          <Text className="text-white font-Outfit-Medium text-lg">Submit</Text>
-        </TouchableOpacity>
+        <CustomButton title="Submit" handleSubmit={handleSubmit} />
 
         <TouchableOpacity
           className="mt-6 items-center"
