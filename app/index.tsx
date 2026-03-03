@@ -1,19 +1,26 @@
 import images from "@/constants/images";
+import { useGlobalContext } from "@/context/GlobalContext";
 import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
 import {
   Image,
+  Platform,
   Pressable,
   Text,
   View,
   useWindowDimensions,
-  Platform
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 export default function Index() {
   const router = useRouter();
   const { height, width } = useWindowDimensions();
+
+  const { isLogged } = useGlobalContext();
+
+  if (isLogged) {
+    return <Redirect href="/trip" />;
+  }
 
   return (
     <View className="flex-1 bg-black">

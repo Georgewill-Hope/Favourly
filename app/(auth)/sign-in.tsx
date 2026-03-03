@@ -1,5 +1,7 @@
+import { auth } from "@/config/FirebaseConfig";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { useRouter } from "expo-router";
+import { Redirect, useRouter } from "expo-router";
+import { onAuthStateChanged, signInWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
@@ -26,14 +28,10 @@ interface FormErrors {
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 const SignUp: React.FC = () => {
-  const [fullName, setFullName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const [confirmPassword, setConfirmPassword] = useState<string>("");
-
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState<boolean>(false);
+  const [error, setError] = useState<string>("");
 
   const router = useRouter();
 
@@ -53,10 +51,39 @@ const SignUp: React.FC = () => {
     transform: [{ translateY: translateY.value }],
   }));
 
+  const handleSubmit = async() => {
+    if (!email || !password) {
+      setError("Enter a valid Email and password!");
+      return;
+    }
+
+    try {
+      const user = await signInWithEmailAndPassword(auth, email, password)
+      if (user) {
+        router.replace("/trip")
+      }
+      
+    } catch (error:any) {
+      const errorCode = error.code;
+        const errorMessage = error.message;
+        console.log(errorCode, errorMessage);
+        if (errorCode === "auth/invalid-credential") {
+          setError("Invalid Credentials");
+        }
+    }
+  };
+
+   
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-orange-500 justify-center px-6"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={
+        Platform.OS === "ios"
+          ? "padding"
+          : Platform.OS === "android"
+            ? "padding"
+            : undefined
+      }
     >
       <AnimatedView style={animatedStyle} className="p-6">
         <Text className="text-3xl text-center font-Outfit-Bold text-white mb-6">
@@ -73,12 +100,12 @@ const SignUp: React.FC = () => {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(value) => {
+              setEmail(value);
+              setError("");
+            }}
             placeholder="Johndoe@gmail.com"
           />
-          <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-            Enter email!
-          </Text>
         </View>
 
         {/* Password */}
@@ -91,7 +118,10 @@ const SignUp: React.FC = () => {
               className="flex-1 py-4 text-xl"
               secureTextEntry={!showPassword}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(value) => {
+                setPassword(value);
+                setError("");
+              }}
             />
             <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)}>
               <Text className="text-blue-500 font-semibold">
@@ -103,18 +133,18 @@ const SignUp: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-          <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-            Enter email!
-          </Text>
+          {error && (
+            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
+              {error}
+            </Text>
+          )}
         </View>
 
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={handleSubmit}
           className={`mt-4 p-4 rounded-xl items-center bg-slate-800`}
         >
-          <Text className="text-white font-Outfit-Medium text-lg">
-            Login
-          </Text>
+          <Text className="text-white font-Outfit-Medium text-lg">Login</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -122,7 +152,7 @@ const SignUp: React.FC = () => {
           onPress={() => router.push("/sign-up")}
         >
           <Text className="font-Outfit-Regular text-lg">
-           Don't have an account? <Text className=" underline"> Sign In</Text>
+            Don't have an account? <Text className=" underline"> Sign In</Text>
           </Text>
         </TouchableOpacity>
       </AnimatedView>

@@ -1,7 +1,10 @@
+import { auth } from "@/config/FirebaseConfig";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
+import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
@@ -35,6 +38,10 @@ const SignUp: React.FC = () => {
   const [showConfirmPassword, setShowConfirmPassword] =
     useState<boolean>(false);
 
+  const [fullNameError, setFullNameError] = useState<string>("");
+  const [emailError, setEmailError] = useState<string>("");
+  const [passwordError, setPasswordError] = useState<string>("");
+
   const router = useRouter();
 
   const opacity = useSharedValue(0);
@@ -53,10 +60,45 @@ const SignUp: React.FC = () => {
     transform: [{ translateY: translateY.value }],
   }));
 
+  const handleSubmit = async () => {
+    console.log(fullName, email, password, confirmPassword);
+    if (!fullName) {
+      setFullNameError("Enter full name!");
+      return;
+    }
+    if (!email) {
+      setEmailError("Enter a valid Email");
+      return;
+    }
+    if (password !== confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
+    try {
+      const newUser = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      if (newUser) {
+        router.replace("/trip");
+      }
+    } catch (error:any) {
+      Alert.alert(error.code)
+    }
+  };
+
   return (
     <KeyboardAvoidingView
       className="flex-1 bg-orange-500 justify-center px-6"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior={
+        Platform.OS === "ios"
+          ? "padding"
+          : Platform.OS === "android"
+            ? "padding"
+            : undefined
+      }
     >
       <AnimatedView style={animatedStyle} className="p-6">
         <Text className="text-3xl text-center font-Outfit-Bold text-white mb-6">
@@ -71,13 +113,18 @@ const SignUp: React.FC = () => {
           <TextInput
             className="bg-white text-black text-xl p-4 rounded-xl font-Outfit-Regular"
             value={fullName}
-            onChangeText={setFullName}
+            onChangeText={(value) => {
+              setFullName(value);
+              setFullNameError("");
+            }}
             placeholder="John Doe"
           />
 
-          <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-            Enter full name!
-          </Text>
+          {fullNameError && (
+            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
+              {fullNameError}
+            </Text>
+          )}
         </View>
 
         {/* Email */}
@@ -90,12 +137,17 @@ const SignUp: React.FC = () => {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(value) => {
+              setEmail(value);
+              setEmailError("");
+            }}
             placeholder="Johndoe@gmail.com"
           />
-          <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-            Enter email!
-          </Text>
+          {emailError && (
+            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
+              {emailError}
+            </Text>
+          )}
         </View>
 
         {/* Password */}
@@ -108,7 +160,10 @@ const SignUp: React.FC = () => {
               className="flex-1 py-4 text-xl"
               secureTextEntry={!showPassword}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(value) => {
+                setPassword(value);
+                setPasswordError("");
+              }}
             />
             <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)}>
               <Text className="text-blue-500 font-semibold">
@@ -120,9 +175,6 @@ const SignUp: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-          <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-            Enter email!
-          </Text>
         </View>
 
         {/* Confirm Password */}
@@ -135,7 +187,10 @@ const SignUp: React.FC = () => {
               className="flex-1  py-4 text-xl"
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
-              onChangeText={setConfirmPassword}
+              onChangeText={(value) => {
+                setConfirmPassword(value);
+                setPasswordError("");
+              }}
             />
             <TouchableOpacity
               onPress={() => setShowConfirmPassword((prev) => !prev)}
@@ -149,18 +204,18 @@ const SignUp: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-          <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-            Enter email!
-          </Text>
+          {passwordError && (
+            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
+              {passwordError}
+            </Text>
+          )}
         </View>
 
         <TouchableOpacity
-          onPress={() => {}}
+          onPress={handleSubmit}
           className={`mt-4 p-4 rounded-xl items-center bg-slate-800`}
         >
-          <Text className="text-white font-Outfit-Medium text-lg">
-            Submit
-          </Text>
+          <Text className="text-white font-Outfit-Medium text-lg">Submit</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
