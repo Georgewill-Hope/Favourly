@@ -1,5 +1,5 @@
-import { auth } from "@/config/FirebaseConfig";
-import { onAuthStateChanged } from "firebase/auth";
+import { getCurrentUser } from "@/lib/appwrite";
+import { Moment } from "moment";
 import React, {
   createContext,
   ReactNode,
@@ -8,9 +8,33 @@ import React, {
   useState,
 } from "react";
 
+export interface TripStyle {
+  name: string;
+  lat: number;
+  lon: number;
+  mapUrl: string;
+  photo: string;
+  traveler: {
+    id: number;
+    title: string;
+    desc: string;
+    icon: string;
+    people: string;
+  };
+  startDate: Moment;
+  endDate: Moment;
+  totalNumberOfDays: number;
+  budget: string;
+}
+
 interface GlobalContextType {
-  isLogged: boolean;
+  isLoggedIn: boolean;
+  setIsLoggedIn: React.Dispatch<React.SetStateAction<boolean>>;
   user: any;
+  setUser: React.Dispatch<React.SetStateAction<any>>;
+  loading: boolean;
+  trip: TripStyle | null;
+  setTrip: React.Dispatch<React.SetStateAction<TripStyle | null>>;
 }
 
 const GlobalContext = createContext<GlobalContextType | undefined>(undefined);
@@ -21,20 +45,40 @@ interface GlobalProviderProps {
 
 export const GlobalProvider = ({ children }: GlobalProviderProps) => {
   const [user, setUser] = useState<any>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [trip, setTrip] = useState<TripStyle | null>(null);
 
   useEffect(() => {
-    onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    });
+    getCurrentUser()
+      .then((res) => {
+        if (res) {
+          setUser(res);
+          setIsLoggedIn(true);
+        } else {
+          setUser(null);
+          setIsLoggedIn(false);
+        }
+      })
+      .catch((error) => {
+        setUser(null);
+        setIsLoggedIn(false);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
   }, []);
-
-  const isLogged = !!user;
 
   return (
     <GlobalContext.Provider
       value={{
-        isLogged,
+        isLoggedIn,
+        setIsLoggedIn,
         user,
+        setUser,
+        loading,
+        trip,
+        setTrip,
       }}
     >
       {children}

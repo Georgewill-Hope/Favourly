@@ -16,10 +16,14 @@ export default function Index() {
   const router = useRouter();
   const { height, width } = useWindowDimensions();
 
-  const { isLogged } = useGlobalContext();
+  const { loading, isLoggedIn } = useGlobalContext();
 
-  if (isLogged) {
-    return <Redirect href="/trip" />;
+  if (loading) {
+    return null;
+  }
+
+  if (isLoggedIn) {
+    return <Redirect href="/(tabs)/trip" />;
   }
 
   return (
@@ -68,7 +72,7 @@ export default function Index() {
 
         <Pressable
           className="bg-orange-500 items-center justify-center p-4 rounded-lg w-full max-w-xl mx-auto"
-          onPress={() => router.push("/sign-up")}
+          onPress={() => router.push("/(auth)/sign-up")}
         >
           <Text className="font-Outfit-Medium text-white text-lg tracking-wider">
             Start

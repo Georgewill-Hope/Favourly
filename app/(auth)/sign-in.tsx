@@ -1,10 +1,11 @@
 import CustomButton from "@/component/CustomButton";
-import { auth } from "@/config/FirebaseConfig";
+import { useGlobalContext } from "@/context/GlobalContext";
+import { getCurrentUser, login } from "@/lib/appwrite";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import { signInWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
+  Alert,
   KeyboardAvoidingView,
   Platform,
   Text,
@@ -32,8 +33,9 @@ const SignUp: React.FC = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [error, setError] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
+  const { setIsLoggedIn, setUser } = useGlobalContext();
   const router = useRouter();
 
   const opacity = useSharedValue(0);
@@ -53,23 +55,34 @@ const SignUp: React.FC = () => {
   }));
 
   const handleSubmit = async () => {
-    if (!email || !password) {
-      setError("Enter a valid Email and password!");
+    const validator =
+      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Enter a valid Email and password!");
       return;
     }
 
+    const validateEmail = validator.test(String(email).toLowerCase());
+
+    if (!validateEmail) {
+      Alert.alert("Erorr", "Invalid Email Address");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const user = await signInWithEmailAndPassword(auth, email, password);
-      if (user) {
-        router.replace("/trip");
-      }
+      await login(email, password);
+      const result = await getCurrentUser();
+      setUser(result);
+      setIsLoggedIn(true);
+
+      Alert.alert("Success", "User signed in successfully");
+      router.replace("/(tabs)/trip");
     } catch (error: any) {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      console.log(errorCode, errorMessage);
-      if (errorCode === "auth/invalid-credential") {
-        setError("Invalid Credentials");
-      }
+      Alert.alert("Error", error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -99,10 +112,7 @@ const SignUp: React.FC = () => {
             keyboardType="email-address"
             autoCapitalize="none"
             value={email}
-            onChangeText={(value) => {
-              setEmail(value);
-              setError("");
-            }}
+            onChangeText={(value) => setEmail(value)}
             placeholder="Johndoe@gmail.com"
           />
         </View>
@@ -117,10 +127,7 @@ const SignUp: React.FC = () => {
               className="flex-1 py-4 text-xl"
               secureTextEntry={!showPassword}
               value={password}
-              onChangeText={(value) => {
-                setPassword(value);
-                setError("");
-              }}
+              onChangeText={(value) => setPassword(value)}
             />
             <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)}>
               <Text className="text-blue-500 font-semibold">
@@ -132,11 +139,6 @@ const SignUp: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-          {error && (
-            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-              {error}
-            </Text>
-          )}
         </View>
 
         <CustomButton title="Login" handleSubmit={handleSubmit} />

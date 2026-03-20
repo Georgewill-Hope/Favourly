@@ -1,14 +1,18 @@
-import { auth } from "@/config/FirebaseConfig";
+import { useGlobalContext } from "@/context/GlobalContext";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { Tabs, useRouter } from "expo-router";
+import { Redirect, Tabs } from "expo-router";
 import React from "react";
 
 const Tabslayout = () => {
-  const router = useRouter();
-  auth.onAuthStateChanged((user) => {
-    if (!user) router.replace("/sign-in");
-  });
+  const { isLoggedIn, loading } = useGlobalContext();
 
+  if (loading) {
+    return null;
+  }
+
+  if (!isLoggedIn) {
+    return <Redirect href="/(auth)/sign-in" />;
+  }
   return (
     <Tabs
       screenOptions={{
@@ -22,8 +26,8 @@ const Tabslayout = () => {
         tabBarStyle: {
           height: 60,
           paddingTop: 3,
-          borderColor:"#fff"
-        }
+          borderColor: "#fff",
+        },
       }}
     >
       <Tabs.Screen

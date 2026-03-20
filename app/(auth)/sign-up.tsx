@@ -1,13 +1,14 @@
 import CustomButton from "@/component/CustomButton";
-import { auth } from "@/config/FirebaseConfig";
+import { useGlobalContext } from "@/context/GlobalContext";
+import { Register, SignOut } from "@/lib/appwrite";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useRouter } from "expo-router";
-import { createUserWithEmailAndPassword } from "firebase/auth";
 import React, { useEffect, useState } from "react";
 import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
@@ -30,18 +31,14 @@ interface FormErrors {
 const AnimatedView = Animated.createAnimatedComponent(View);
 
 const SignUp: React.FC = () => {
-  const [fullName, setFullName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
+  const [name, setName] = useState<string>("");
+  const [emailAddress, setEmailAddress] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [confirmPassword, setConfirmPassword] = useState<string>("");
 
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-  const [showConfirmPassword, setShowConfirmPassword] =
-    useState<boolean>(false);
-
-  const [fullNameError, setFullNameError] = useState<string>("");
-  const [emailError, setEmailError] = useState<string>("");
-  const [passwordError, setPasswordError] = useState<string>("");
+  const [showPassword, setShowPassword] = useState<boolean>(true);
+  const [showConfirmPassword, setShowConfirmPassword] = useState<boolean>(true);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const router = useRouter();
 
@@ -61,32 +58,41 @@ const SignUp: React.FC = () => {
     transform: [{ translateY: translateY.value }],
   }));
 
+  const { setUser, setIsLoggedIn } = useGlobalContext();
+
+  const logout = async () => {
+    await SignOut();
+    setUser(null);
+    setIsLoggedIn(false);
+
+    router.replace("/");
+  };
+
   const handleSubmit = async () => {
-    console.log(fullName, email, password, confirmPassword);
-    if (!fullName) {
-      setFullNameError("Enter full name!");
-      return;
-    }
-    if (!email) {
-      setEmailError("Enter a valid Email");
-      return;
-    }
+    const validator =
+      /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+
+    const validateEmail = validator.test(String(emailAddress).toLowerCase());
     if (password !== confirmPassword) {
-      setPasswordError("Passwords do not match");
+      Alert.alert("Erorr", "Passwords do not match!");
       return;
     }
 
+    if (!validateEmail) {
+      Alert.alert("Erorr", "Invalid Email Address");
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      const newUser = await createUserWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      if (newUser) {
-        router.replace("/trip");
-      }
+      const newClient = await Register(emailAddress, password, name);
+
+      if (newClient) router.push("/(tabs)/trip");
     } catch (error: any) {
-      Alert.alert(error.code);
+      Alert.alert("Erorr", error.message);
+      throw error;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -106,26 +112,17 @@ const SignUp: React.FC = () => {
           Create Account
         </Text>
 
-        {/* Full Name */}
+        {/* Name */}
         <View className="mb-4">
           <Text className="text-white font-Outfit-Regular text-lg mb-2">
             Full Name
           </Text>
           <TextInput
             className="bg-white text-black text-xl p-4 rounded-xl font-Outfit-Regular"
-            value={fullName}
-            onChangeText={(value) => {
-              setFullName(value);
-              setFullNameError("");
-            }}
+            value={name}
+            onChangeText={(value) => setName(value)}
             placeholder="John Doe"
           />
-
-          {fullNameError && (
-            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-              {fullNameError}
-            </Text>
-          )}
         </View>
 
         {/* Email */}
@@ -137,18 +134,12 @@ const SignUp: React.FC = () => {
             className="bg-white text-black text-xl p-4 rounded-xl font-Outfit-Regular"
             keyboardType="email-address"
             autoCapitalize="none"
-            value={email}
+            value={emailAddress}
             onChangeText={(value) => {
-              setEmail(value);
-              setEmailError("");
+              setEmailAddress(value);
             }}
             placeholder="Johndoe@gmail.com"
           />
-          {emailError && (
-            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-              {emailError}
-            </Text>
-          )}
         </View>
 
         {/* Password */}
@@ -161,10 +152,7 @@ const SignUp: React.FC = () => {
               className="flex-1 py-4 text-xl"
               secureTextEntry={!showPassword}
               value={password}
-              onChangeText={(value) => {
-                setPassword(value);
-                setPasswordError("");
-              }}
+              onChangeText={(value) => setPassword(value)}
             />
             <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)}>
               <Text className="text-blue-500 font-semibold">
@@ -188,10 +176,7 @@ const SignUp: React.FC = () => {
               className="flex-1  py-4 text-xl"
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
-              onChangeText={(value) => {
-                setConfirmPassword(value);
-                setPasswordError("");
-              }}
+              onChangeText={(value) => setConfirmPassword(value)}
             />
             <TouchableOpacity
               onPress={() => setShowConfirmPassword((prev) => !prev)}
@@ -205,14 +190,9 @@ const SignUp: React.FC = () => {
               </Text>
             </TouchableOpacity>
           </View>
-          {passwordError && (
-            <Text className="text-red-800 font-Outfit-Regular mt-1 animate-bounce">
-              {passwordError}
-            </Text>
-          )}
         </View>
 
-        <CustomButton title="Submit" handleSubmit={handleSubmit} />
+        <CustomButton title="Sign up" handleSubmit={handleSubmit} />
 
         <TouchableOpacity
           className="mt-6 items-center"
@@ -228,3 +208,72 @@ const SignUp: React.FC = () => {
 };
 
 export default SignUp;
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: 20,
+    gap: 12,
+  },
+  title: {
+    marginBottom: 8,
+  },
+  label: {
+    fontWeight: "600",
+    fontSize: 14,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    padding: 12,
+    fontSize: 16,
+    backgroundColor: "#fff",
+  },
+  button: {
+    backgroundColor: "#000000",
+    width: "100%",
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  buttonPressed: {
+    opacity: 0.7,
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  buttonText: {
+    color: "#fff",
+    fontWeight: "600",
+  },
+  secondaryButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 8,
+    alignItems: "center",
+    marginTop: 8,
+  },
+  secondaryButtonText: {
+    color: "#0a7ea4",
+    fontWeight: "600",
+  },
+  linkContainer: {
+    flexDirection: "row",
+    gap: 4,
+    marginTop: 12,
+    alignItems: "center",
+  },
+  error: {
+    color: "#d32f2f",
+    fontSize: 12,
+    marginTop: -8,
+  },
+  debug: {
+    fontSize: 10,
+    opacity: 0.5,
+    marginTop: 8,
+  },
+});
