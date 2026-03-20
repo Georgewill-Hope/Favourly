@@ -99,10 +99,3 @@ export const SignOut = async () => {
   }
 };
 
-// export default function App() {
-//   const [loggedInUser, setLoggedInUser] =
-//     useState<Models.User<Models.Preferences> | null>(null);
-//   const [email, setEmail] = useState("");
-//   const [password, setPassword] = useState("");
-//   const [name, setName] = useState("");
-// }

@@ -69,7 +69,7 @@ const Trip = () => {
         <Text className="font-Outfit-Bold text-2xl tracking-wider">
           My Trips
         </Text>
-        <Pressable onPress={() => router.push("/(create)/search-place")}>
+        <Pressable onPress={() => router.push("/(tabs)/discover")}>
           <Ionicons name="add-circle" size={35} color="#f97316" />
         </Pressable>
       </View>

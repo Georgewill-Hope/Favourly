@@ -141,7 +141,7 @@ const SignUp: React.FC = () => {
           </View>
         </View>
 
-        <CustomButton title="Login" handleSubmit={handleSubmit} />
+        <CustomButton title="Login" handleSubmit={handleSubmit} disabled={isSubmitting} />
 
         <TouchableOpacity
           className="mt-6 items-center"

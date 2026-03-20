@@ -1,5 +1,5 @@
 import React from "react";
-import { Text, TouchableOpacity } from "react-native";
+import { ActivityIndicator, Text, TouchableOpacity } from "react-native";
 
 interface CustomButtonProps {
   title: string;
@@ -14,9 +14,9 @@ const CustomButton = ({ handleSubmit, title, disabled }: CustomButtonProps) => {
       disabled={disabled}
       style={{opacity:disabled ? 0.5 : 1}}
     >
-      <Text className="text-white font-Outfit-Medium text-lg tracking-wider">
+      {disabled ? <ActivityIndicator size={20} color="black"/> :<Text className="text-white font-Outfit-Medium text-lg tracking-wider">
         {title}
-      </Text>
+      </Text>}
     </TouchableOpacity>
   );
 };
